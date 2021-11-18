@@ -14,7 +14,7 @@
 #include <arpa/inet.h>
 
 #define SERV_PORT 80
-#define BUFSIZE 16384
+#define BUFSIZE 8192
 			
 char webpage[] =
 "HTTP/1.1 200 OK\r\n"
@@ -68,19 +68,26 @@ void upload_file(char *buffer,int fd,int taken){
 	if(download_fd == -1)
 		write(fd,"Faild to download file.\n",19);
 	write(download_fd,pos,(content_end-pos));
-	while((taken = read(fd, buffer, BUFSIZE)) > 0){
+
+	while((taken = read(fd, buffer, BUFSIZE)) > 0)
+	{
 		printf("In while\n");
 		buflen = strlen(buffer);
 		content_end = strstr(content_end, "-----");
-		if(content_end != NULL){
+		if(content_end != NULL)
+		{
 			*content_end = '\0';
 			write(download_fd, buffer, (content_end - buffer));
-		}else{
+		}
+		else
+		{
 			write(download_fd, buffer, taken);
 		}
+	
 		if(content_end != NULL)
 			break;
 	}
+
 	close(download_fd);
 	printf("////close fd////\n");
 	return;
@@ -136,46 +143,57 @@ int main(int argc, char*argv[])
 
 		printf("Got client connection!\n");
 
-		if(!fork())
+		pid_t pid = fork();
+		if(pid<0)
 		{
-			/*child*/
-			close(fd_server);
-			memset(buf,0,BUFSIZE);
-			read(fd_client,buf,BUFSIZE-1);
-
-			printf("%s\n",buf);
-
-
-			if(strncmp(buf,"GET ",4)==0||strncmp(buf,"get ",4)==0)
+			perror("fork error\n");
+			exit(3);
+		}
+		else
+		{
+			if(pid==0)
 			{
-				write(fd_client, webpage, sizeof(webpage)-1);
-			}
-			else if(strncmp(buf,"POST ",5)==0||strncmp(buf,"post ",5)==0){
+				pid_t pid_level_2 = fork();
+				if(pid_level_2==0)
+				{
+					/*child*/
+					close(fd_server);
+					//memset(buf,0,BUFSIZE);
+					read(fd_client,buf,BUFSIZE-1);
+					printf("%s\n",buf);
+					if(strncmp(buf,"GET ",4)==0||strncmp(buf,"get ",4)==0)
+					{
+						write(fd_client, webpage, sizeof(webpage)-1);
+					}
+					else if(strncmp(buf,"POST ",5)==0||strncmp(buf,"post ",5)==0){
 				
-				write(fd_client, webpage, sizeof(webpage)-1);
-				ret = read(fd_client,buf,BUFSIZE);
-				printf("77777777777777777777777777777777777777777\n");
-				printf("%s\n",buf);
-				printf("77777777777777777777777777777777777777777\n");
-				upload_file(buf,fd_client,ret);
-       				write(fd_client, webpage, sizeof(webpage)-1);
+						write(fd_client, webpage, sizeof(webpage)-1);
+						ret = read(fd_client,buf,BUFSIZE-1);
+						printf("!!!!!!!!!!buffer content!!!!!!!!!!!!!!!\n");
+						printf("%s\n",buf);
+						printf("!!!!!!!!!!buffer content!!!!!!!!!!!!!!!\n");
+						upload_file(buf,fd_client,ret);
+		       				write(fd_client, webpage, sizeof(webpage)-1);
 
-				while ((ret=read(webpage, buf, BUFSIZE))>0){
-           				write(fd_client,buf,ret);
-        			}
 				
-			}
-			else
-				exit(3);
+					}
+					else
+						exit(3);
 				
 		
-			close(fd_client);
-			printf("closing~\n");
-			exit(0);
+					close(fd_client);
+					printf("closing~\n");
+					exit(0);
+				}
+				else
+					exit(0);
+			}
+			else if(pid>0)/*parent*/
+			{
+				wait(NULL);					
+				close(fd_client);
+			}
 		}
-		/*parent*/
-		close(fd_client);
-	
 	}
 	return 0;
 
