@@ -168,8 +168,8 @@ void message_handler(char *mes, int sender){
 
             /*--------------check win-----------------------------*/
             for (int i = 0; i < 8;i++)  {
-                if (board[win_dis[i][0]]==board[win_dis[i][1]] && board[win_dis[i][1]]==board[win_dis[i][2]]) {     //one line has the same sign
-                    if (board[win_dis[i][0]]!='*') {    // sign is not '*'
+                if (board[OX_win_situation[i][0]]==board[OX_win_situation[i][1]] && board[OX_win_situation[i][1]]==board[OX_win_situation[i][2]]) {     //one line has the same sign
+                    if (board[OX_win_situation[i][0]]!='*') {    // sign is not '*'
                         strcat(game_info, " is winner!!!\n");
                         sprintf (buf,"8 2 %c %c %c %c %c %c %c %c %c %s\n",board[0],board[1],board[2],board[3],board[4],board[5],board[6],board[7],board[8],game_info);
                         printf ("7:%s",buf);
@@ -227,9 +227,9 @@ void *pthread_service(void* sfd){
 
         /*---close socket-------*/
         if(numbytes<=0){
-            for(i=0;i<Max;i++){
-                if(fd==fdt[i]){
-                    fdt[i]=0;               
+            for(i=0;i<Max_client_num;i++){
+                if(fd==fd_table[i]){
+                    fd_table[i]=0;               
                 }
             }
             memset(users[fd].id,'\0',sizeof(users[fd].id));
@@ -314,5 +314,4 @@ int  main()
     }
     close(listenfd);            
 }
-
 
