@@ -15,7 +15,7 @@
 #include <linux/ipv6.h>
 
 
-void print_packet_info(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
+void print_packet_func(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
 {
 	/*---------------------------time stamp-------------------------------------*/
 	printf("timesec: %08lX\n",header->ts.tv_sec);
@@ -23,14 +23,10 @@ void print_packet_info(u_char *args, const struct pcap_pkthdr *header, const u_c
 	printf("timestamp: %s", ctime((const time_t*)&header->ts.tv_sec));	
 
 	/*-----------------------------show MAC and type---------------------------*/
-	struct ether_header *eth = (struct ether_header*) packet;
-	u_int16_t type = ntohs(eth->ether_type);
-	printf("Source MAC: %02X:%02X:%02X:%02X:%02X:%02X\n",\
-	eth->ether_shost[0], eth->ether_shost[1], eth->ether_shost[2],\
-	eth->ether_shost[3], eth->ether_shost[4], eth->ether_shost[5]);
-	printf("Dest MAC: %02X:%02X:%02X:%02X:%02X:%02X\n",\
-	eth->ether_dhost[0], eth->ether_dhost[1], eth->ether_dhost[2],\
-	eth->ether_dhost[3], eth->ether_dhost[4], eth->ether_dhost[5]);
+	struct ether_header *eth_hd = (struct ether_header*) packet;
+	u_int16_t type = ntohs(eth_hd->ether_type);
+	printf("Source MAC: %02X:%02X:%02X:%02X:%02X:%02X\n",eth_hd->ether_shost[0], eth_hd->ether_shost[1], eth_hd->ether_shost[2],eth_hd->ether_shost[3], eth_hd->ether_shost[4], eth_hd->ether_shost[5]);
+	printf("Dest MAC: %02X:%02X:%02X:%02X:%02X:%02X\n",	eth_hd->ether_dhost[0], eth_hd->ether_dhost[1], eth_hd->ether_dhost[2],eth_hd->ether_dhost[3], eth_hd->ether_dhost[4], eth_hd->ether_dhost[5]);
 
 	printf("Type: %04X\n",type);
 
@@ -74,7 +70,7 @@ void print_packet_info(u_char *args, const struct pcap_pkthdr *header, const u_c
 	else{
 		printf("Not IP packet\n");
 	}
-	/*------------------------end of function print_packet_info----------------------*/
+	/*------------------------end of function print_packet_func----------------------*/
 	printf("----------------------------------------\n");
 	printf("----------------------------------------\n");
 }
@@ -98,6 +94,6 @@ int main(int argc, char *argv[])
 		perror("open pcap fail");
 		exit(0);
 	}
-	pcap_loop(handle, 0, print_packet_info, NULL);
+	pcap_loop(handle, 0, print_packet_func, NULL);
 	return 0;
 }
